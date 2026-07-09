@@ -53,12 +53,26 @@ handoff files (`.claudecode/handoffs/`). The Backend agent publishes interface c
 implementing, so Frontend and Test run in the same parallel wave. QA gates everything; only QA
 opens PRs.
 
+**Enforcement model:** the CTO is the main Claude Code thread (subagents can't spawn subagents,
+so orchestration lives at the top). The six specialists are native `.claude/agents/` subagents
+whose restrictions are enforced by the harness, not by prose: QA has no Edit/Write tools (it can
+verdict and `gh pr create`, never fix code), Support is Read/Grep/Glob-only on Haiku, and the
+model ladder (haiku → sonnet → opus) is pinned in each charter's frontmatter.
+
 ## Repository Layout
 
 ```
 claude-engineering-team/
+├── .claude/
+│   └── agents/             ← native subagent charters (one file per role,
+│       ├── devops-lead.md     model + tool restrictions enforced by the harness)
+│       ├── backend-engineer.md
+│       ├── frontend-engineer.md
+│       ├── test-engineer.md
+│       ├── qa-reviewer.md     ← read-only + Bash: can verdict & open PRs, cannot edit code
+│       └── support-query.md   ← Read/Grep/Glob only, haiku, 10k-token ceiling
 ├── .claudecode/
-│   ├── instructions.md     ← the Global Skill (the whole team, one file)
+│   ├── instructions.md     ← CTO orchestration playbook (main thread = CTO)
 │   └── metrics.json        ← append-only token/cost ledger (dashboard data source)
 ├── dashboard/
 │   └── index.html          ← optional cyberpunk monitor (single file, zero deps)

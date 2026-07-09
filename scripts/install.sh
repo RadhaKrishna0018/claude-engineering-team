@@ -15,15 +15,21 @@ echo "⚡ Installing Claude Engineering Team into $(pwd)"
 
 [ -d .git ] || { echo "✗ Not a git repository root. cd to your repo root first."; exit 1; }
 
-mkdir -p "$DIR/plans" "$DIR/handoffs"
+mkdir -p "$DIR/plans" "$DIR/handoffs" .claude/agents
 
-# 1. Global skill — never clobber a locally customized copy without backup
+# 1. Orchestration playbook — never clobber a locally customized copy without backup
 if [ -f "$DIR/instructions.md" ]; then
   cp "$DIR/instructions.md" "$DIR/instructions.md.bak"
   echo "• Existing instructions.md backed up → instructions.md.bak"
 fi
 curl -fsSL "$TEAM_SRC/.claudecode/instructions.md" -o "$DIR/instructions.md"
-echo "• Installed $DIR/instructions.md (7-role team skill)"
+echo "• Installed $DIR/instructions.md (CTO orchestration playbook)"
+
+# 1b. Native subagent charters (tool/model-restricted, one file per role)
+for agent in devops-lead backend-engineer frontend-engineer test-engineer qa-reviewer support-query; do
+  curl -fsSL "$TEAM_SRC/.claude/agents/$agent.md" -o ".claude/agents/$agent.md"
+done
+echo "• Installed 6 subagent charters → .claude/agents/"
 
 # 2. Metrics ledger — create only if absent (it is append-only local state)
 if [ ! -f "$DIR/metrics.json" ]; then

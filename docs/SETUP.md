@@ -10,10 +10,12 @@ curl -fsSL https://raw.githubusercontent.com/RadhaKrishna0018/claude-engineering
 
 What it does:
 
-1. Creates `.claudecode/{plans,handoffs}` and installs `instructions.md` (the 7-role skill).
-2. Creates the `metrics.json` ledger stamped with your repo name (kept if one already exists).
-3. Appends a marker block to `CLAUDE.md` so Claude Code loads the team automatically.
-4. Adds `handoffs/` and the private cost ledger to `.gitignore`.
+1. Creates `.claudecode/{plans,handoffs}` and installs `instructions.md` (the CTO playbook).
+2. Installs the six subagent charters into `.claude/agents/` — native Claude Code subagents
+   with model + tool restrictions enforced by the harness.
+3. Creates the `metrics.json` ledger stamped with your repo name (kept if one already exists).
+4. Appends a marker block to `CLAUDE.md` so Claude Code loads the team automatically.
+5. Adds `handoffs/` and the private cost ledger to `.gitignore`.
 
 Then open Claude Code in that repo and state a goal:
 
@@ -93,6 +95,10 @@ a same-origin snapshot you deliberately export.
 
 ```bash
 ls .claudecode/                      # instructions.md, metrics.json, plans/, handoffs/
+ls .claude/agents/                   # 6 subagent charters
 grep -A2 claude-engineering-team CLAUDE.md
 python -c "import json;json.load(open('.claudecode/metrics.json'));print('ledger OK')"
 ```
+
+In Claude Code, `/agents` should now list all six roles (devops-lead, backend-engineer,
+frontend-engineer, test-engineer, qa-reviewer, support-query).
