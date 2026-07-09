@@ -81,10 +81,13 @@ The build is zero-backend, so Pages works — but **only** with these guardrails
 5. **No secrets in the HTML — ever.** No API keys, no tokens, no internal URLs. The dashboard
    is read-only by design and must stay that way.
 
-Enable it: push the repo → *Settings → Pages → Source: GitHub Actions* → the included
-[.github/workflows/pages.yml](../.github/workflows/pages.yml) deploys on pushes to `master`
-that touch `dashboard/`. Since the ledger isn't published, the hosted copy runs in demo mode
-unless you point `METRICS_URL` at a same-origin snapshot you deliberately export.
+Enable it: the included [.github/workflows/pages.yml](../.github/workflows/pages.yml) is
+**manual-only** (Actions tab → *Deploy dashboard to GitHub Pages* → *Run workflow*) and
+self-enables Pages on first run via `enablement: true` — if your plan allows it. On GitHub
+Free, private repos cannot use Pages at all (the run fails with `Not Found` from
+`configure-pages`); make the repo public or upgrade, keeping guardrail 1 in mind. Since the
+ledger isn't published, the hosted copy runs in demo mode unless you point `METRICS_URL` at
+a same-origin snapshot you deliberately export.
 
 ## 5. Verifying an install
 
