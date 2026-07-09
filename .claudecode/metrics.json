@@ -1,0 +1,38 @@
+{
+  "$schema_version": "1.0.0",
+  "instance": {
+    "owner": "local",
+    "repo": "",
+    "started": "2026-07-09T00:00:00Z"
+  },
+  "budget": {
+    "cap_usd": 25.0,
+    "warn_pct": 70,
+    "halt_pct": 90,
+    "period": "per-goal"
+  },
+  "agents": {
+    "cto":      { "model": "claude-fable-5",            "display": "CTO Orchestrator" },
+    "devops":   { "model": "claude-opus-4-8",           "display": "DevOps Lead" },
+    "frontend": { "model": "claude-sonnet-5",           "display": "Frontend Engineer" },
+    "backend":  { "model": "claude-sonnet-5",           "display": "Backend / Full-Stack" },
+    "test":     { "model": "claude-sonnet-5",           "display": "Test Engineer" },
+    "qa":       { "model": "claude-sonnet-5",           "display": "QA & PR Reviewer" },
+    "support":  { "model": "claude-haiku-4-5-20251001", "display": "Support / Query" }
+  },
+  "entries": [
+    {
+      "ts": "2026-07-09T10:00:00Z",
+      "goal": "example-goal",
+      "task": "T1",
+      "agent": "cto",
+      "model": "claude-fable-5",
+      "tokens_in": 4210,
+      "tokens_out": 1180,
+      "cache_read": 3600,
+      "cost_usd": 0.041,
+      "status": "done",
+      "event": "spawn"
+    }
+  ]
+}

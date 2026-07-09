@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>NEON // Agent Ops</title>
+<style>
+  /* ─── Cyberpunk design tokens ─────────────────────────────── */
+  :root{
+    --bg:#050810; --panel:#0a0f1e; --panel2:#0d1428; --line:#1a2340;
+    --cyan:#00f0ff; --magenta:#ff2bd6; --lime:#b6ff00; --amber:#ffb300;
+    --red:#ff3860; --txt:#c8d6f0; --dim:#5a6b94; --mono:'Cascadia Code','JetBrains Mono',Consolas,monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--txt);font-family:var(--mono);min-height:100vh;overflow-x:hidden}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:999;
+    background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,240,255,.012) 2px 4px)}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse at 20% -10%,rgba(255,43,214,.07),transparent 50%),
+               radial-gradient(ellipse at 90% 110%,rgba(0,240,255,.07),transparent 50%)}
+  .glow-c{text-shadow:0 0 8px var(--cyan),0 0 24px rgba(0,240,255,.4)}
+  .glow-m{text-shadow:0 0 8px var(--magenta),0 0 24px rgba(255,43,214,.4)}
+
+  /* ─── Login gateway ───────────────────────────────────────── */
+  #gate{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center}
+  .gate-box{width:min(420px,90vw);border:1px solid var(--line);background:var(--panel);padding:2.4rem;
+    clip-path:polygon(0 0,calc(100% - 22px) 0,100% 22px,100% 100%,22px 100%,0 calc(100% - 22px));
+    box-shadow:0 0 60px rgba(0,240,255,.12)}
+  .gate-box h1{font-size:1.2rem;letter-spacing:.4em;color:var(--cyan);margin-bottom:.4rem}
+  .gate-box p{color:var(--dim);font-size:.72rem;margin-bottom:1.6rem;letter-spacing:.12em}
+  .gate-box input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--cyan);
+    font-family:var(--mono);font-size:1rem;padding:.8rem 1rem;outline:none;letter-spacing:.3em}
+  .gate-box input:focus{border-color:var(--cyan);box-shadow:0 0 16px rgba(0,240,255,.25)}
+  .gate-box button{width:100%;margin-top:1rem;padding:.8rem;background:transparent;border:1px solid var(--magenta);
+    color:var(--magenta);font-family:var(--mono);font-size:.85rem;letter-spacing:.35em;cursor:pointer;transition:.2s}
+  .gate-box button:hover{background:var(--magenta);color:#000;box-shadow:0 0 24px rgba(255,43,214,.5)}
+  #gate-err{color:var(--red);font-size:.7rem;margin-top:.8rem;min-height:1em;letter-spacing:.1em}
+  .shake{animation:shake .3s}
+  @keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+  /* ─── Shell ───────────────────────────────────────────────── */
+  header{display:flex;align-items:baseline;gap:1.2rem;padding:1.1rem 1.6rem;border-bottom:1px solid var(--line);
+    background:linear-gradient(90deg,var(--panel),transparent)}
+  header h1{font-size:1rem;letter-spacing:.45em;color:var(--cyan)}
+  header .sub{color:var(--dim);font-size:.68rem;letter-spacing:.15em}
+  header .live{margin-left:auto;font-size:.68rem;color:var(--lime);letter-spacing:.2em}
+  header .live::before{content:"●";margin-right:.5em;animation:blink 1.4s infinite}
+  @keyframes blink{50%{opacity:.15}}
+  main{display:grid;gap:1rem;padding:1rem 1.6rem 2rem;grid-template-columns:1.4fr 1fr;max-width:1500px;margin:0 auto}
+  @media(max-width:980px){main{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);padding:1.1rem 1.2rem;position:relative;
+    clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)}
+  .panel h2{font-size:.7rem;letter-spacing:.35em;color:var(--dim);margin-bottom:1rem}
+  .panel h2 b{color:var(--cyan);font-weight:normal}
+
+  /* ─── Agent monitor graph ─────────────────────────────────── */
+  #graph{width:100%;height:460px;display:block}
+  .node-ring{fill:none;stroke-width:1.5}
+  .node.active .node-ring{animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{50%{stroke-width:4;opacity:.5}}
+  .node text{fill:var(--txt);font-family:var(--mono)}
+  .node .role{font-size:10px;letter-spacing:.14em}
+  .node .model{font-size:8px;fill:var(--dim)}
+  .node .stat{font-size:8px;letter-spacing:.2em}
+  .link{stroke:var(--line);stroke-width:1.2;fill:none}
+  .link.hot{stroke:var(--cyan);stroke-dasharray:5 7;animation:flow .9s linear infinite;
+    filter:drop-shadow(0 0 4px var(--cyan))}
+  @keyframes flow{to{stroke-dashoffset:-12}}
+
+  /* ─── Ledger & budget ─────────────────────────────────────── */
+  .big{font-size:1.9rem;color:var(--cyan)}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-bottom:1rem}
+  .kpi{background:var(--panel2);border:1px solid var(--line);padding:.7rem .9rem}
+  .kpi .l{font-size:.6rem;color:var(--dim);letter-spacing:.2em}
+  .kpi .v{font-size:1.15rem;margin-top:.25rem;color:var(--txt)}
+  .kpi .v.warn{color:var(--amber)} .kpi .v.crit{color:var(--red);animation:blink 1s infinite}
+  #budget-bar{height:14px;background:var(--panel2);border:1px solid var(--line);position:relative;overflow:hidden;margin:.4rem 0 .3rem}
+  #budget-fill{height:100%;width:0%;transition:width .8s cubic-bezier(.2,.8,.2,1);
+    background:linear-gradient(90deg,var(--cyan),var(--magenta));box-shadow:0 0 14px rgba(0,240,255,.5)}
+  #budget-fill.warn{background:linear-gradient(90deg,var(--amber),var(--red))}
+  .marks{display:flex;justify-content:space-between;font-size:.6rem;color:var(--dim);letter-spacing:.1em}
+  table{width:100%;border-collapse:collapse;font-size:.72rem}
+  th{color:var(--dim);font-weight:normal;text-align:left;letter-spacing:.2em;font-size:.6rem;
+    padding:.45rem .5rem;border-bottom:1px solid var(--line)}
+  td{padding:.5rem;border-bottom:1px solid rgba(26,35,64,.5)}
+  td.num{text-align:right;color:var(--cyan)} th.num{text-align:right}
+  .tag{display:inline-block;padding:.1rem .5rem;font-size:.6rem;letter-spacing:.15em;border:1px solid}
+  .tag.active{color:var(--lime);border-color:var(--lime);animation:blink 1.6s infinite}
+  .tag.done{color:var(--dim);border-color:var(--line)}
+  .tag.blocked{color:var(--red);border-color:var(--red)}
+  #feed{list-style:none;max-height:240px;overflow-y:auto;font-size:.7rem}
+  #feed li{padding:.42rem 0;border-bottom:1px solid rgba(26,35,64,.5);display:flex;gap:.7rem;
+    animation:slidein .4s ease-out}
+  @keyframes slidein{from{opacity:0;transform:translateY(-6px)}}
+  #feed .t{color:var(--dim);flex:none}
+  #feed .a{color:var(--magenta);flex:none;width:74px}
+  .span2{grid-column:1/-1}
+  ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-thumb{background:var(--line)}
+</style>
+</head>
+<body>
+
+<!-- ═══ ACCESS GATE ═══ -->
+<div id="gate">
+  <form class="gate-box" id="gate-form">
+    <h1 class="glow-c">NEON&nbsp;//&nbsp;OPS</h1>
+    <p>RESTRICTED — LOCAL OPERATOR CREDENTIALS REQUIRED</p>
+    <input id="gate-key" type="password" placeholder="ACCESS KEY" autocomplete="off" autofocus>
+    <button type="submit">AUTHENTICATE</button>
+    <div id="gate-err"></div>
+  </form>
+</div>
+
+<header style="display:none" id="hdr">
+  <h1 class="glow-c">NEON // AGENT OPS</h1>
+  <span class="sub" id="repo-sub">repo: —</span>
+  <span class="live" id="live-lbl">POLLING LEDGER</span>
+</header>
+
+<main style="display:none" id="app">
+  <section class="panel">
+    <h2>AGENT MONITOR <b id="active-count">0 ACTIVE</b></h2>
+    <svg id="graph" viewBox="0 0 640 460" preserveAspectRatio="xMidYMid meet"></svg>
+  </section>
+
+  <section class="panel">
+    <h2>TOKEN &amp; COST LEDGER</h2>
+    <div class="kpis">
+      <div class="kpi"><div class="l">TOTAL SPEND</div><div class="v big" id="k-cost">$0.00</div></div>
+      <div class="kpi"><div class="l">TOKENS IN/OUT</div><div class="v" id="k-tok">0 / 0</div></div>
+      <div class="kpi"><div class="l">BURN RATE</div><div class="v" id="k-burn">$0.00/min</div></div>
+    </div>
+    <div class="l" style="font-size:.6rem;color:var(--dim);letter-spacing:.2em">BUDGET CONSUMPTION <span id="k-pct" style="color:var(--cyan)">0%</span> of <span id="k-cap">$0</span></div>
+    <div id="budget-bar"><div id="budget-fill"></div></div>
+    <div class="marks"><span>0%</span><span id="warn-lbl">⚠ 70% WARN</span><span id="halt-lbl">⛔ 90% HALT</span></div>
+    <div id="countdown" style="margin-top:.6rem;font-size:.68rem;color:var(--amber);letter-spacing:.12em;min-height:1em"></div>
+    <table style="margin-top:1rem">
+      <thead><tr><th>AGENT</th><th>MODEL</th><th class="num">TOKENS</th><th class="num">COST</th><th>STATE</th></tr></thead>
+      <tbody id="agent-rows"></tbody>
+    </table>
+  </section>
+
+  <section class="panel span2">
+    <h2>EVENT FEED <b>live handoffs · reviews · spawns</b></h2>
+    <ul id="feed"></ul>
+  </section>
+</main>
+
+<script>
+"use strict";
+/* ═══ CONFIG ══════════════════════════════════════════════════
+   ACCESS_HASH = SHA-256 hex of your passphrase. Default key: "neon-override"
+   Generate your own:
+     echo -n "your-passphrase" | sha256sum
+   For GitHub Pages, set METRICS_URL to a same-origin copy of metrics.json. */
+const ACCESS_HASH = "21b3b3b4786c511402c5e64ceec26a782cafd47b77b726acf800458c0ecbafb1";
+const METRICS_URL = "../.claudecode/metrics.json";
+const POLL_MS = 3000;
+
+/* ─── Access gate (client-side deterrent; real security = private hosting) ─── */
+const gate=document.getElementById("gate"),gerr=document.getElementById("gate-err");
+async function sha256(s){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));
+  return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}
+document.getElementById("gate-form").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const key=document.getElementById("gate-key").value;
+  if(await sha256(key)===ACCESS_HASH){sessionStorage.setItem("neon-auth","1");boot()}
+  else{gerr.textContent="ACCESS DENIED — SIGNATURE MISMATCH";
+    gate.querySelector(".gate-box").classList.add("shake");
+    setTimeout(()=>gate.querySelector(".gate-box").classList.remove("shake"),350)}
+});
+if(sessionStorage.getItem("neon-auth")==="1")boot();
+
+function boot(){
+  gate.style.display="none";
+  document.getElementById("hdr").style.display="flex";
+  document.getElementById("app").style.display="grid";
+  buildGraph(); poll(); setInterval(poll,POLL_MS);
+}
+
+/* ─── Agent graph topology ─── */
+const NODES=[
+  {id:"cto",     x:320,y:60,  c:"var(--magenta)",label:"CTO"},
+  {id:"devops",  x:90, y:210, c:"var(--amber)",  label:"DEVOPS"},
+  {id:"backend", x:245,y:230, c:"var(--cyan)",   label:"BACKEND"},
+  {id:"frontend",x:400,y:230, c:"var(--cyan)",   label:"FRONTEND"},
+  {id:"test",    x:550,y:210, c:"var(--cyan)",   label:"TEST"},
+  {id:"qa",      x:320,y:380, c:"var(--lime)",   label:"QA / PR"},
+  {id:"support", x:560,y:70,  c:"var(--dim)",    label:"SUPPORT"},
+];
+const LINKS=[["cto","devops"],["cto","backend"],["cto","frontend"],["cto","test"],["cto","support"],
+  ["backend","frontend"],["backend","test"],["devops","qa"],["backend","qa"],["frontend","qa"],
+  ["test","qa"],["qa","cto"]];
+const svg=document.getElementById("graph"), NS="http://www.w3.org/2000/svg";
+const nodeEls={},linkEls={};
+function el(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);return e}
+function buildGraph(){
+  for(const[a,b]of LINKS){
+    const n1=NODES.find(n=>n.id===a),n2=NODES.find(n=>n.id===b);
+    const mx=(n1.x+n2.x)/2, my=(n1.y+n2.y)/2-18;
+    const p=el("path",{d:`M${n1.x} ${n1.y} Q${mx} ${my} ${n2.x} ${n2.y}`,class:"link"});
+    svg.appendChild(p); linkEls[a+"-"+b]=p;
+  }
+  for(const n of NODES){
+    const g=el("g",{class:"node",id:"node-"+n.id});
+    g.appendChild(el("circle",{cx:n.x,cy:n.y,r:30,fill:"var(--panel2)",stroke:"var(--line)"}));
+    g.appendChild(el("circle",{cx:n.x,cy:n.y,r:34,class:"node-ring",stroke:n.c}));
+    const t1=el("text",{x:n.x,y:n.y-2,"text-anchor":"middle",class:"role"});t1.textContent=n.label;
+    const t2=el("text",{x:n.x,y:n.y+11,"text-anchor":"middle",class:"model"});t2.textContent="";
+    const t3=el("text",{x:n.x,y:n.y+50,"text-anchor":"middle",class:"stat",fill:n.c});t3.textContent="IDLE";
+    g.append(t1,t2,t3); svg.appendChild(g);
+    nodeEls[n.id]={g,model:t2,stat:t3};
+  }
+}
+
+/* ─── Ledger polling & render ─── */
+const fmt=n=>n>=1e6?(n/1e6).toFixed(1)+"M":n>=1e3?(n/1e3).toFixed(1)+"k":String(n);
+let lastFeedLen=0;
+async function poll(){
+  let data;
+  try{
+    const r=await fetch(METRICS_URL+"?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok)throw 0; data=await r.json();
+    document.getElementById("live-lbl").textContent="LEDGER LIVE";
+  }catch(_){document.getElementById("live-lbl").textContent="LEDGER OFFLINE — DEMO";data=demo()}
+  render(data);
+}
+function render(d){
+  const entries=d.entries||[];
+  document.getElementById("repo-sub").textContent="repo: "+((d.instance&&d.instance.repo)||"—");
+  /* per-agent aggregate */
+  const agg={};
+  for(const e of entries){
+    const a=agg[e.agent]||(agg[e.agent]={ti:0,to:0,cost:0,status:"done",model:e.model});
+    a.ti+=e.tokens_in||0; a.to+=e.tokens_out||0; a.cost+=e.cost_usd||0;
+    a.status=e.status; a.model=e.model;
+  }
+  const cost=Object.values(agg).reduce((s,a)=>s+a.cost,0);
+  const ti=Object.values(agg).reduce((s,a)=>s+a.ti,0), to=Object.values(agg).reduce((s,a)=>s+a.to,0);
+  const cap=(d.budget&&d.budget.cap_usd)||1, pct=Math.min(100,cost/cap*100);
+  const warn=(d.budget&&d.budget.warn_pct)||70, halt=(d.budget&&d.budget.halt_pct)||90;
+  /* burn rate over last 10 min of entries */
+  const now=Date.now(), recent=entries.filter(e=>now-Date.parse(e.ts)<6e5);
+  const burn=recent.reduce((s,e)=>s+(e.cost_usd||0),0)/10;
+  document.getElementById("k-cost").textContent="$"+cost.toFixed(2);
+  document.getElementById("k-tok").textContent=fmt(ti)+" / "+fmt(to);
+  const kb=document.getElementById("k-burn"); kb.textContent="$"+burn.toFixed(2)+"/min";
+  kb.className="v"+(burn*10>cap-cost?" crit":burn>0.05?" warn":"");
+  document.getElementById("k-pct").textContent=pct.toFixed(1)+"%";
+  document.getElementById("k-cap").textContent="$"+cap.toFixed(2);
+  const fill=document.getElementById("budget-fill");
+  fill.style.width=pct+"%"; fill.className=pct>=warn?"warn":"";
+  const cd=document.getElementById("countdown");
+  cd.textContent = pct>=halt ? "⛔ HALT LINE CROSSED — CTO STOPS NEW SPAWNS"
+    : pct>=warn ? "⚠ WARN — CTO DOWNGRADING NON-CRITICAL TASKS TO CHEAPER MODELS"
+    : burn>0 ? "≈ "+Math.max(0,((cap*halt/100-cost)/burn)).toFixed(0)+" min to halt line at current burn" : "";
+  /* table + nodes */
+  const rows=document.getElementById("agent-rows"); rows.innerHTML="";
+  let active=0;
+  for(const id of Object.keys(nodeEls)){
+    const a=agg[id], meta=(d.agents&&d.agents[id])||{};
+    const st=a?a.status:"idle";
+    if(st==="active")active++;
+    nodeEls[id].g.classList.toggle("active",st==="active");
+    nodeEls[id].model.textContent=(meta.model||a&&a.model||"").replace("claude-","").slice(0,14);
+    nodeEls[id].stat.textContent=st.toUpperCase();
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${(meta.display||id).toUpperCase()}</td><td style="color:var(--dim)">${(meta.model||"—").replace("claude-","")}</td>
+      <td class="num">${a?fmt(a.ti+a.to):"0"}</td><td class="num">$${a?a.cost.toFixed(3):"0.000"}</td>
+      <td><span class="tag ${st==="active"?"active":st==="blocked"?"blocked":"done"}">${st.toUpperCase()}</span></td>`;
+    rows.appendChild(tr);
+  }
+  document.getElementById("active-count").textContent=active+" ACTIVE";
+  /* hot links: light up paths for agents active in last poll */
+  for(const k in linkEls)linkEls[k].classList.remove("hot");
+  const last=entries.slice(-6);
+  for(const e of last)if(e.status==="active")for(const k in linkEls)
+    if(k.includes(e.agent))linkEls[k].classList.add("hot");
+  /* feed */
+  if(entries.length!==lastFeedLen){
+    const feed=document.getElementById("feed"); feed.innerHTML="";
+    for(const e of entries.slice(-14).reverse()){
+      const li=document.createElement("li");
+      li.innerHTML=`<span class="t">${e.ts.slice(11,19)}</span><span class="a">${e.agent.toUpperCase()}</span>
+        <span>${e.event.toUpperCase()} · ${e.task} · ${fmt((e.tokens_in||0)+(e.tokens_out||0))} tok · $${(e.cost_usd||0).toFixed(3)}</span>`;
+      feed.appendChild(li);
+    }
+    lastFeedLen=entries.length;
+  }
+}
+/* Demo data when no ledger is reachable (e.g. opened from disk) */
+function demo(){
+  const t=n=>new Date(Date.now()-n*6e4).toISOString();
+  return{instance:{repo:"demo"},budget:{cap_usd:25,warn_pct:70,halt_pct:90},
+    agents:{cto:{model:"claude-fable-5",display:"CTO"},devops:{model:"claude-opus-4-8",display:"DevOps Lead"},
+      frontend:{model:"claude-sonnet-5",display:"Frontend"},backend:{model:"claude-sonnet-5",display:"Backend"},
+      test:{model:"claude-sonnet-5",display:"Test Eng"},qa:{model:"claude-sonnet-5",display:"QA/PR"},
+      support:{model:"claude-haiku-4-5",display:"Support"}},
+    entries:[
+      {ts:t(9),goal:"g",task:"PLAN",agent:"cto",model:"claude-fable-5",tokens_in:6200,tokens_out:1900,cost_usd:.11,status:"done",event:"turn"},
+      {ts:t(7),goal:"g",task:"T1",agent:"backend",model:"claude-sonnet-5",tokens_in:14100,tokens_out:5200,cost_usd:.31,status:"active",event:"spawn"},
+      {ts:t(6),goal:"g",task:"T2",agent:"frontend",model:"claude-sonnet-5",tokens_in:11800,tokens_out:4600,cost_usd:.26,status:"active",event:"spawn"},
+      {ts:t(5),goal:"g",task:"T3",agent:"devops",model:"claude-opus-4-8",tokens_in:9200,tokens_out:3800,cost_usd:.74,status:"active",event:"spawn"},
+      {ts:t(3),goal:"g",task:"T1",agent:"test",model:"claude-sonnet-5",tokens_in:8600,tokens_out:2900,cost_usd:.19,status:"active",event:"handoff"},
+      {ts:t(2),goal:"g",task:"Q1",agent:"support",model:"claude-haiku-4-5",tokens_in:2100,tokens_out:400,cost_usd:.004,status:"done",event:"turn"},
+      {ts:t(1),goal:"g",task:"T1",agent:"qa",model:"claude-sonnet-5",tokens_in:7300,tokens_out:1800,cost_usd:.15,status:"active",event:"review"}
+    ]};
+}
+</script>
+</body>
+</html>
