@@ -5,7 +5,7 @@
 From the **root of any git repository**:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<you>/claude-engineering-team/master/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/RadhaKrishna0018/claude-engineering-team/master/scripts/install.sh | bash
 ```
 
 What it does:

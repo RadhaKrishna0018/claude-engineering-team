@@ -2,13 +2,13 @@
 # ⚡ Claude Engineering Team — one-liner bootstrap
 #
 # Usage (from the root of ANY target repository):
-#   curl -fsSL https://raw.githubusercontent.com/<you>/claude-engineering-team/master/scripts/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/RadhaKrishna0018/claude-engineering-team/master/scripts/install.sh | bash
 #
 # Or with a custom source (fork / private mirror):
 #   TEAM_SRC=https://raw.githubusercontent.com/<org>/<fork>/master bash install.sh
 set -euo pipefail
 
-TEAM_SRC="${TEAM_SRC:-https://raw.githubusercontent.com/<you>/claude-engineering-team/master}"
+TEAM_SRC="${TEAM_SRC:-https://raw.githubusercontent.com/RadhaKrishna0018/claude-engineering-team/master}"
 DIR=".claudecode"
 
 echo "⚡ Installing Claude Engineering Team into $(pwd)"

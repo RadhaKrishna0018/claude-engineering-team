@@ -75,7 +75,7 @@ claude-engineering-team/
 Activate the team in **any** repository:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/<you>/claude-engineering-team/master/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/RadhaKrishna0018/claude-engineering-team/master/scripts/install.sh | bash
 ```
 
 Then just talk to Claude Code in that repo — the CTO takes over planning and delegation
